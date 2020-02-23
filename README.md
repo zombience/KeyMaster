@@ -42,9 +42,7 @@ and comes with the default Pages:
 public enum ControlPage
 {
     None            = 0,
-    /// <summary>
-    /// page selection will always be active
-    /// </summary>
+    // page selection will always be active   
     PageSelection   = 1, 
     Dev             = 2,
     Scene           = 3, 
@@ -156,6 +154,7 @@ public class MyAmazingClass : KeyHolderBase
 
 Decorate your method with the KeyToken attribute. 
 The KeyToken attribute takes 2 required args and 1 optional arg:
+
 page: 	used to enable/disable these triggers appropriately when selected page changes  
 key: 	if using keyboard input, used to listen for trigger
 combo: 	(optional) add modifier keys (alt, shift, ctrl). if not adding mod keys, this trigger **will not** trigger if **any** mod keys are held down. This is so that it is possible to use the same key on the same page, for different triggers. See caveat section above. 
@@ -193,22 +192,23 @@ using KeyMaster;
 
 public class TriggerContainer : IKeyHolder
 {
-	[KeyToken(ControlPage.Dev, KeyCode.T)]
-	void Triggered()
-	{
-		Debug.LogFormat("triggered");
-	} 
+    [KeyToken(ControlPage.Dev, KeyCode.T)]
+    void Triggered()
+    {
+        Debug.LogFormat("triggered");
+    } 
 }
+
 
 public class SomeManagerClass : Monobehaviour
 {
-	TriggerContainer triggers;
+	
+    TriggerContainer triggers;
 
-	void Start()
+    void Start()
 	{
 		triggers.RegisterKeyHolder();
 	}
-
 }
 </code>
 </pre>
