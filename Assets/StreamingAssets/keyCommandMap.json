@@ -1,0 +1,47 @@
+{
+    "jsonTokens": [
+        {
+            "page": "Audio",
+            "labels": [
+                "Generic Audio Trigger",
+                "Multi Use Example No Combo",
+                "Multi Use Example With Combo",
+                "Play BGMusic",
+                "Key Combo Example"
+            ]
+        },
+        {
+            "page": "Dev",
+            "labels": [
+                "Dev Mode Trigger",
+                "Toggle Console Output",
+                "Key Combo Example"
+            ]
+        },
+        {
+            "page": "Scene",
+            "labels": [
+                "Generic Audio Trigger",
+                "Toggle Spotlight",
+                "Random Rotate Light"
+            ]
+        },
+        {
+            "page": "UI",
+            "labels": [
+                "Toggle UI",
+                "Display Time"
+            ]
+        },
+        {
+            "page": "PageSelection",
+            "labels": [
+                "Deactivate All Key Controls",
+                "Set Dev Active",
+                "Set Scene Active",
+                "Set UIActive",
+                "Set Audio Active"
+            ]
+        }
+    ]
+}

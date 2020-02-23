@@ -1,0 +1,16 @@
+{
+    "name": "KeyMasterEditor",
+    "references": [
+        "GUID:e749035e46aef1b49b3f636bce5dddf5"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
+}
