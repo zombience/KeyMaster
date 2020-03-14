@@ -346,32 +346,41 @@ namespace KeyMaster.Implementation
                 KeyMaster.RegisterKeyholder(this);
             }
 
+            /****************************************************************************************************\
+             *                                             VERY IMPORTANT:                                      *
+             * if you plan on using the example Touchdesigner project for remote triggering                     *
+             * then these page-selection method names MUST begin with "ControlPage"                             *
+             * followed by the EXACT name of the target page. The TD project expects this.                      *
+             * If you are not using remote triggering, or if you are building your own, then do as you please   *
+             *                                                                                                  *
+            \****************************************************************************************************/
+
             [KeyToken(ControlPage.PageSelection, KeyCode.Alpha0)]
-            void DeactivateAllKeyControls()
+            void ControlPageNone()
             {
                 KeyMaster.SetActivePage(ControlPage.None);
             }
 
             [KeyToken(ControlPage.PageSelection, KeyCode.Alpha1)]
-            void SetDevActive()
+            void ControlPageDev()
             {
                 KeyMaster.SetActivePage(ControlPage.Dev);
             }
 
             [KeyToken(ControlPage.PageSelection, KeyCode.Alpha2)]
-            void SetSceneActive()
+            void ControlPageScene()
             {
                 KeyMaster.SetActivePage(ControlPage.Scene);
             }
 
             [KeyToken(ControlPage.PageSelection, KeyCode.Alpha3)]
-            void SetUIActive()
+            void ControlPageUI()
             {
                 KeyMaster.SetActivePage(ControlPage.UI);
             }
 
             [KeyToken(ControlPage.PageSelection, KeyCode.Alpha4)]
-            void SetAudioActive()
+            void ControlPageAudio()
             {
                 KeyMaster.SetActivePage(ControlPage.Audio);
             }

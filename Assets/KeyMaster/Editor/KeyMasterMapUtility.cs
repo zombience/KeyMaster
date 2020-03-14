@@ -87,18 +87,11 @@ namespace KeyMaster.EditorUtilities
         static public KeyVault GetKeyVault()
         {
             KeyVault storageAsset = null;
-            var storageAssets = FindAssetsOfType<KeyVault>();
-
-            if(storageAssets.Count() == 0)
+            var assetPath = GetStorageLocation();
+            //Debug.LogFormat("#EDITOR# attempting to load keystorage at path: {0}", assetPath);
+            storageAsset = AssetDatabase.LoadAssetAtPath<KeyVault>(assetPath);
+            if(storageAsset == null)
             {
-                var keyStorageClass = AssetDatabase.FindAssets("KeyVault t: TextAsset")
-                    .Select(a => AssetDatabase.GUIDToAssetPath(a))
-                    .FirstOrDefault();
-
-                // need system path to get full Assets/ project path
-                var fullpath    = Directory.GetParent(keyStorageClass).FullName;
-                // convert back to assetdatabase-friendly path
-                var assetPath   = Path.Combine(SystemToAssetPath(fullpath), "keyVault.asset");
                 Debug.LogFormat("#EDITOR# keystorage was not found, creating new keystorage at path: {0}", assetPath);
                 storageAsset    = ScriptableObject.CreateInstance<KeyVault>();
 
@@ -107,19 +100,25 @@ namespace KeyMaster.EditorUtilities
             }
             else
             {
-                storageAsset = storageAssets.FirstOrDefault();
                 //Debug.LogFormat("#EDITOR# found keystorage object at {0}", AssetDatabase.GetAssetPath(storageAsset));
             }
             return storageAsset;
         }
 
-        static public IEnumerable<T> FindAssetsOfType<T>() where T : Object
+        static string GetStorageLocation()
         {
-            return AssetDatabase.FindAssets("t:" + typeof(T).Name)
-                .Select(g => AssetDatabase.GUIDToAssetPath(g))
-                .Select(p => (T)AssetDatabase.LoadMainAssetAtPath(p));
-        }
+            var keyStorageClass = AssetDatabase.FindAssets("KeyVault t: TextAsset")
+                    .Select(a => AssetDatabase.GUIDToAssetPath(a))
+                    .FirstOrDefault();
+            //Debug.LogFormat("#EDITOR# KeyStorage found at: {0}", keyStorageClass);
 
+            // need system path to get full Assets/ project path
+            var fullpath = Directory.GetParent(keyStorageClass).FullName;
+            //Debug.LogFormat("#EDITOR# KeyStorage full path: {0}", fullpath);
+
+            // convert back to assetdatabase-friendly path
+            return Path.Combine(SystemToAssetPath(fullpath), "keyVault.asset");
+        }
 
         /// <summary>
         /// takes a full system path and returns unity's assetdatabase-friendly path
@@ -245,7 +244,7 @@ namespace KeyMaster.EditorUtilities
 
         void Init()
         {
-            if (keyVault == null)
+            if (keyVault == null || keyVault.tokens == null)
             {
                 Debug.LogFormat("#EDITOR# couldn't find keyVault asset to read key command map");
                 return;
@@ -297,16 +296,16 @@ namespace KeyMaster.EditorUtilities
         void OnGUI()
         {
             Color c = GUI.backgroundColor;
-            if (assignments == null)
-            {
-                GUI.skin.button.alignment = TextAnchor.MiddleLeft;
-                Init();
-                return;
-            }
-            if(assignments.Length == 0)
+            if(assignments == null || assignments.Length == 0)
             {
                 style.normal.textColor = Color.white;
                 EditorGUILayout.LabelField("no keys found", style);
+                if (GUILayout.Button(new GUIContent("repopulate tokens from codebase")))
+                {
+                    EditorUtilities.PopulateKeyVault();
+                    keyVault = EditorUtilities.GetKeyVault();
+                    Init();
+                }
                 return;
             }
 

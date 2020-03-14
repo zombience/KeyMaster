@@ -36,11 +36,11 @@
         {
             "page": "PageSelection",
             "labels": [
-                "Deactivate All Key Controls",
-                "Set Dev Active",
-                "Set Scene Active",
-                "Set UIActive",
-                "Set Audio Active"
+                "Control Page None",
+                "Control Page Dev",
+                "Control Page Scene",
+                "Control Page UI",
+                "Control Page Audio"
             ]
         }
     ]
