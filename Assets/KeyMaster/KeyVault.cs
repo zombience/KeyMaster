@@ -8,6 +8,21 @@ namespace KeyMaster
     /// </summary>
     public class KeyVault : ScriptableObject
     {
+        [HideInInspector]
         public KeyToken[] tokens;
+
+        [SerializeField, HideInInspector]
+        bool allowRemote;
+
+        [SerializeField, HideInInspector]
+        KeyMasterRemoteConfig remoteConfig = new KeyMasterRemoteConfig()
+        {
+            port = 9001,
+        };
+
+        public KeyMasterRemoteConfig GetConfig()
+        {
+            return remoteConfig;
+        }
     }
 }

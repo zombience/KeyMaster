@@ -36,11 +36,11 @@
         {
             "page": "PageSelection",
             "labels": [
-                "Control Page None",
-                "Control Page Dev",
-                "Control Page Scene",
-                "Control Page UI",
-                "Control Page Audio"
+                "None",
+                "Dev",
+                "Scene",
+                "UI",
+                "Audio"
             ]
         }
     ]

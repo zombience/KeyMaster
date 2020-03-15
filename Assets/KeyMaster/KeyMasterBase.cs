@@ -58,14 +58,7 @@ namespace KeyMaster
         public bool AllowTrigger()
         {
             bool allowTrigger = false;
-            if (keyCombo != null)
-            {
-                allowTrigger = keyCombo.IsDown();
-            }
-            else
-            {
-                
-            }
+          
             if (key != KeyCode.None)
             {
                 if(keyCombo != null)
@@ -84,23 +77,6 @@ namespace KeyMaster
             return allowTrigger;
         }
     }
-
-    // TODO: port network listener from StrangeIoC service base
-    /*
-    [System.Serializable]
-    public class NetworkCommand : DataBridgeBase
-    {
-        public ControlPage page;
-        public string label;
-
-        public override string ToString()
-        {
-            return JsonUtility.ToJson(this);
-        }
-    }
-    */
-
-
 
     public class KeyholderBase : MonoBehaviour, IKeyHolder
     {

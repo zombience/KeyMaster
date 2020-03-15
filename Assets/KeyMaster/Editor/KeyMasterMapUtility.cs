@@ -7,7 +7,6 @@ using UnityEditor;
 
 using KeyMaster;
 
-
 namespace KeyMaster.EditorUtilities
 {
     static public partial class EditorUtilities
@@ -205,8 +204,6 @@ namespace KeyMaster.EditorUtilities
         }
     }
 
-
-
     public class CommandMapWindow : EditorWindow
     {
 
@@ -261,7 +258,7 @@ namespace KeyMaster.EditorUtilities
                     page    = attrib.page,
                     label   = attrib.label,
                     key     = attrib.key,
-                    combo   = attrib.keyCombo == null || attrib.keyCombo.keys == null ? string.Empty : attrib.keyCombo.keys
+                    combo   = attrib.keyCombo == null || attrib.keyCombo.keys == null || attrib.keyCombo.keys.Length < 1 ? string.Empty : attrib.keyCombo.keys
                                 .Select(k => string.Format(" + {0}", k.ToString()))
                                 .Aggregate((a, b) => a + " " + b),
                 };
@@ -521,12 +518,53 @@ namespace KeyMaster.EditorUtilities
     [CustomEditor(typeof(KeyVault))]
     public class KeyVaultEditor : Editor
     {
+
+        SerializedProperty
+            allowRemote,
+            remoteConfig,
+            port;
+
+        void OnEnable()
+        {
+            allowRemote     = serializedObject.FindProperty("allowRemote");
+            remoteConfig    = serializedObject.FindProperty("remoteConfig");
+            port            = remoteConfig.FindPropertyRelative("port");
+        }
+
         public override void OnInspectorGUI()
         {
             if(GUILayout.Button("view command map"))
             {
                 CommandMapWindow.OpenWindow();
             }
+
+            /*
+             * the following is only necessary if 
+             * planning to use network commands
+             */
+
+            int indentLevel = EditorGUI.indentLevel;
+            EditorGUI.BeginChangeCheck();
+            EditorGUILayout.PropertyField(allowRemote);
+            if(allowRemote.boolValue)
+            {
+                EditorGUILayout.PropertyField(remoteConfig);
+                EditorGUI.indentLevel = indentLevel + 1;
+                EditorGUILayout.PropertyField(port);
+                EditorGUI.indentLevel = indentLevel;
+            }
+            
+            if(EditorGUI.EndChangeCheck())
+            {
+                serializedObject.ApplyModifiedProperties();
+                var json = JsonUtility.ToJson((target as KeyVault).GetConfig(), true);
+                Utilities.WriteRemoteConfig(json, allowRemote.boolValue);
+            }
+
+            base.OnInspectorGUI();
         }
+
+       
     }
+
 }

@@ -13,3 +13,7 @@ MonoBehaviour:
   m_Name: keyVault
   m_EditorClassIdentifier: 
   tokens: []
+  allowRemote: 0
+  remoteConfig:
+    port: 9001
+    ipAddress: 

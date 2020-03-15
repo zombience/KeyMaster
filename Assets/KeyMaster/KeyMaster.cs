@@ -14,6 +14,9 @@ namespace KeyMaster
 
         void RegisterKeyholder(IKeyHolder obj);
 
+        void HandleRemoteCommand(RemoteKeymasterCommand command);
+
+        void EnqueueAction(System.Action action);
         /// <summary>
         /// can be used to turn on/off objects or take other actions when ControlPage focus is changed
         /// </summary>
@@ -43,8 +46,10 @@ namespace KeyMaster.Implementation
         ControlPage prevPage;
         static PageSelector pageSelector;
         GateKeeper gateKeeper;
+        GateKeeperRemote remoteKeeper;
 
         event System.Action<ControlPage> OnPageActivation;
+
 
         public void Initialize()
         {
@@ -52,6 +57,12 @@ namespace KeyMaster.Implementation
             // immortal gatekeeper
             GameObject.DontDestroyOnLoad(gateKeeper.gameObject);
             gateKeeper.RunRoutine(GateKeeperRoutine());
+            var remoteConfig = Utilities.LoadRemoteConfig();
+            if (remoteConfig == null) return;
+
+            remoteKeeper = new GameObject("remoteKeeper").AddComponent<GateKeeperRemote>();
+            GameObject.DontDestroyOnLoad(remoteKeeper);
+            Utilities.StartKeymasterRemote(remoteConfig.port);
         }
 
         #region page activation
@@ -80,38 +91,6 @@ namespace KeyMaster.Implementation
         #endregion
 
         #region command map
-        //public Dictionary<ControlPage, List<string>> GetCommandMap()
-        //{
-        //    var methods = GetDecoratedMethods();
-        //    Dictionary<ControlPage, List<string>> commandMap = new Dictionary<ControlPage, List<string>>();
-
-        //    var attributes = new List<KeyMasterToken>();
-        //    methods.ForEach((m) =>  
-        //    {
-        //        var atts = m.GetCustomAttributes<KeyMasterToken>();
-        //        foreach (var a in atts)
-        //        {
-        //            a.label = m.Name.FriendlyFormat();
-        //            attributes.Add(a);
-        //        }
-        //    });
-            
-        //    foreach (var attrib in attributes)
-        //    {
-        //        if (commandMap.ContainsKey(attrib.page)) commandMap[attrib.page].Add(attrib.label);
-        //        else
-        //        {
-        //            var list = new List<string>();
-                    
-        //            list.Add(attrib.label);
-        //            commandMap.Add(attrib.page, list);
-        //        }
-        //    }
-
-        //    return commandMap;
-        //}
-
-
         public void RegisterKeyholder(IKeyHolder obj)
         {
             // move monobehaviour objects into DontDestroyOnLoad scene under GateKeeper
@@ -172,7 +151,7 @@ namespace KeyMaster.Implementation
 
             
         #region reflection and registration
-            [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void OnStartup()
         {
             Debug.LogFormat("#KEYMASTER# initializing keymaster");
@@ -290,47 +269,49 @@ namespace KeyMaster.Implementation
             }
         }
 
-        // TODO: migrate network listener from StrangeIoC project
+        
         #region network listener
-        //void HandleCommand(NetworkMessage msg)
-        //{
-        //    //Debug.LogFormat("#COMMAND# received {0} | {1} ", msg.topic, msg.payload);
+        public void HandleRemoteCommand(RemoteKeymasterCommand command)
+        {
+            remoteKeeper?.Enqueue(() => HandleCommand(command));
+        }
 
-        //    var command = JsonUtility.FromJson<NetworkCommand>(msg.payload);
-        //    if (command == null)
-        //    {
-        //        Debug.LogFormat("#COMMAND# {0}| FAIL: network message payload was empty OR failed to deserialize: {1}", this, msg.payload);
-        //        return;
-        //    }
-        //    //Debug.LogFormat("#COMMAND# {0}| received external command Page: {1} Label: {2}", this, command.page, command.label);
+        public void EnqueueAction(System.Action action)
+        {
+            remoteKeeper?.Enqueue(action);
+        }
 
-
-        //    //Debug.LogFormat("#COMMAND# {0}| received raw command packet {1}", this, command.ToString());
-        //    SetActivePage(command.page);
-
-        //    Dictionary<string, ExternalControl> dict;
-        //    bool success = runtimeCommandMap.TryGetValue(command.page, out dict);
-        //    if (success)
-        //    {
-        //        ExternalControl control;
-        //        success = dict.TryGetValue(command.label, out control);
-        //        if (success)
-        //        {
-        //            Debug.LogFormat("#COMMAND# {0}| label {1} method {2} object: {3}", this, command.label, control.action.Method.Name, control.action.Target);
-        //            control.action?.Invoke();
-        //            DisplayDebugNotification(command.label);
-
-        //        }
-        //        else
-        //        {
-        //            Debug.LogFormat("#COMMAND# {0}| failed to find registered method for page {1} label {2}", this, command.page, command.label);
-        //        }
-        //    }
-        //    else
-        //    {
-        //        Debug.LogFormat("#COMMAND# {0}| failed to find any registered commands for page {1}", this, command.page);
-        //    }
-        //}
+        void HandleCommand(RemoteKeymasterCommand command)
+        {   
+            //Debug.LogFormat("#COMMAND# {0}| received raw command packet {1}", this, command.ToString());
+            SetActivePage(command.page);
+            List<KeyToken> list = null;
+            
+            bool success = keyCommandMap.TryGetValue(currentActivePage, out list);
+            
+            if (success)
+            {
+                foreach (var item in list)
+                {
+                    //Debug.LogFormat("#COMMAND# comparing label {0} to received command.label {1}", item.label, command.label);
+                    if(item.label == command.label)
+                    {
+                        Debug.LogFormat("#KEYMASTER# invoking: {0}| label {1} method {2} object: {3}", this, command.label, item.action?.Method.Name, item.action?.Target);
+                        item.action?.Invoke();
+                        break;
+                    }
+                    else
+                    {
+                        //Debug.LogFormat("#COMMAND# {0}| failed to find registered method for page {1} label {2}", this, command.page, command.label);
+                    }
+                }
+                
+            }
+            else
+            {
+                Debug.LogFormat("#COMMAND# {0}| failed to find any registered commands for page {1}", this, command.page);
+            }
+        }
         #endregion
 
 
@@ -349,38 +330,38 @@ namespace KeyMaster.Implementation
             /****************************************************************************************************\
              *                                             VERY IMPORTANT:                                      *
              * if you plan on using the example Touchdesigner project for remote triggering                     *
-             * then these page-selection method names MUST begin with "ControlPage"                             *
-             * followed by the EXACT name of the target page. The TD project expects this.                      *
+             * then these page-selection method names MUST have EXACT same names as ControlPage enum values     *
+             * The TD project expects this.                                                                     *
              * If you are not using remote triggering, or if you are building your own, then do as you please   *
              *                                                                                                  *
             \****************************************************************************************************/
 
             [KeyToken(ControlPage.PageSelection, KeyCode.Alpha0)]
-            void ControlPageNone()
+            void None()
             {
                 KeyMaster.SetActivePage(ControlPage.None);
             }
 
             [KeyToken(ControlPage.PageSelection, KeyCode.Alpha1)]
-            void ControlPageDev()
+            void Dev()
             {
                 KeyMaster.SetActivePage(ControlPage.Dev);
             }
 
             [KeyToken(ControlPage.PageSelection, KeyCode.Alpha2)]
-            void ControlPageScene()
+            void Scene()
             {
                 KeyMaster.SetActivePage(ControlPage.Scene);
             }
 
             [KeyToken(ControlPage.PageSelection, KeyCode.Alpha3)]
-            void ControlPageUI()
+            void UI()
             {
                 KeyMaster.SetActivePage(ControlPage.UI);
             }
 
             [KeyToken(ControlPage.PageSelection, KeyCode.Alpha4)]
-            void ControlPageAudio()
+            void Audio()
             {
                 KeyMaster.SetActivePage(ControlPage.Audio);
             }
@@ -396,6 +377,31 @@ namespace KeyMaster.Implementation
                 gatekeeperRoutine = StartCoroutine(routine);
             }
         }
+
+        public class GateKeeperRemote : MonoBehaviour
+        {
+            Queue<System.Action> actions = new Queue<Action>();
+
+            public void Enqueue(System.Action action)
+            {
+                lock(actions)
+                {
+                    actions.Enqueue(action);
+                }
+            }
+
+            void Update()
+            {
+                lock (actions)
+                {
+                    while (actions.Count > 0)
+                    {
+                        actions.Dequeue()?.Invoke();
+                    }
+                }
+            }
+        }
+
         #endregion
     }
 }
